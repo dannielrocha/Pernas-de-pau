@@ -1,0 +1,6 @@
+#Ignorar configurações locais
+.classpath
+.project
+.settings/
+#Ignorar classes compiladas
+target/
