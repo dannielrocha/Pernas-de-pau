@@ -116,7 +116,7 @@ public class PernaDePauApp {
 					return Integer.valueOf(selected.toString());
 				}
 				
-				return 0;
+				return 2;
 			}
 		});
 	}
