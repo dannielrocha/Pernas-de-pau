@@ -18,7 +18,7 @@ public class ConhecendoSwingApp_1 {
 	public static void main(String[] args) {
 
 		JFrame frontView = new JFrame("Simple Swing App");
-
+		frontView.setResizable(false);
 		frontView.setAlwaysOnTop(true);
 		frontView.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frontView.setAutoRequestFocus(true);
