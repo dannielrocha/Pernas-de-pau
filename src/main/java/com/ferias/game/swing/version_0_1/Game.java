@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
-	List<Ball> bolas = new ArrayList<Ball>();
-	List<Prize> prizes = new ArrayList<Prize>();
+	List<Observer> observers = new ArrayList<Observer>();
+	GameState gameState = new GameState();
 	Dimension dimensao = new Dimension();
 	
 	public Game(Dimension dimension) {
@@ -16,93 +16,116 @@ public class Game {
 	}
 	
 	
-	private void horizontalMove(Ball bola, int step){
-		if ( (bola.getX() >= 10 && step < 0) || (step > 0 && bola.getX()+10 <= dimensao.getWidth()-10) )
-			bola.horizontalMove(step);
+	private void horizontalMove(Player player, int step){
+		//executa uma regra
+		if ( (player.getX() >= 10 && step < 0) || (step > 0 && player.getX()+10 <= dimensao.getWidth()-10) )
+			player.horizontalMove(step);
 		
-		colorir(bola);
+		//executa uma regra
+		colorir(player);
+		
+		//executa uma regra
 		SecureRandom rand = new SecureRandom();
-		Prize prize = hasCollision(bola);
+		Prize prize = hasCollision(player);
 		if (prize != null) {
 			prize.x = rand.nextInt(dimensao.width/10)*10;
 			prize.y = rand.nextInt(dimensao.height/10)*10;
 		}
+		
+		updateAll();
 	}
 	
-	private void verticalMove(Ball bola, int step){
-		if ( (bola.getY() >= 10 && step < 0) || (step > 0 && bola.getY()+10 <= dimensao.getHeight()-10) )
-			bola.verticalMove(step);
+	private void verticalMove(Player player, int step){
+		//executa uma regra
+		if ( (player.getY() >= 10 && step < 0) || (step > 0 && player.getY()+10 <= dimensao.getHeight()-10) )
+			player.verticalMove(step);
 		
-		colorir(bola);
+		//executa uma regra
+		colorir(player);
+		
+		//executa uma regra
 		SecureRandom rand = new SecureRandom();
-		Prize prize = hasCollision(bola);
+		Prize prize = hasCollision(player);
 		if (prize != null) {
 			prize.x = rand.nextInt(dimensao.width/10)*10;
 			prize.y = rand.nextInt(dimensao.height/10)*10;
 		}
+		
+		updateAll();
 	}
 	
-	public void moveUP(Ball bola) {
-		verticalMove(bola, -10);
+	public void moveUP(Player player) {
+		verticalMove(player, -10);
 	}
 	
-	public void moveDown(Ball bola) {
-		verticalMove(bola, 10);
+	public void moveDown(Player player) {
+		verticalMove(player, 10);
 	}
 	
-	public void moveLeft(Ball bola) {
-		horizontalMove(bola, -10);
+	public void moveLeft(Player player) {
+		horizontalMove(player, -10);
 	}
 	
-	public void moveRight(Ball bola) {
-		horizontalMove(bola, 10);
-	}
-	public Ball getBola(int IdBola) {
-		return this.bolas.get(IdBola);
+	public void moveRight(Player player) {
+		horizontalMove(player, 10);
 	}
 	
-	public List<Ball> getBolas(){
-		return this.bolas;
+	public Player getPlayer(int idPlayer) {
+		return gameState.getPlayers().get(idPlayer);
 	}
+
 	
-	public void newBall() {
-		if (bolas.size()<2) {
-			Ball bola = new Ball(bolas.size(), 0,0, Color.BLUE);
-			bolas.add(bola);
+	public void newPlayer() {
+		if (gameState.getPlayers().size()<2) {
+			Player player = new Player(gameState.getPlayers().size(), 0,0, Color.BLUE);
+			gameState.getPlayers().add(player);
 		}
+		
+		updateAll();
 	}
 	
 	public void newPrize() {
-		if(prizes.size()<1) {
+		if(gameState.getPrizes().size()<1) {
 			SecureRandom rand = new SecureRandom();
 			int xPrize = rand.nextInt(dimensao.width/10)*10;
 			int yPrize = rand.nextInt(dimensao.height/10)*10;
-			Prize prize = new Prize(prizes.size(), xPrize, yPrize, Color.PINK);
-			prizes.add(prize);
+			Prize prize = new Prize(gameState.getPrizes().size(), xPrize, yPrize, Color.PINK);
+			gameState.getPrizes().add(prize);
 		}
+		
+		updateAll();
 	}
 	
-	private final void colorir(Ball bola) {
-		if (bola.getY() > dimensao.getHeight()/2 && bola.getX() < dimensao.getWidth()/2)
-			bola.setColor(Color.BLUE);
-		else if (bola.getY() < dimensao.getHeight()/2 && bola.getX() < dimensao.getWidth()/2)
-			bola.setColor(Color.GREEN);
-		else if (bola.getX() > dimensao.getWidth()/2 && bola.getY() > dimensao.getHeight()/2)
-			bola.setColor(Color.RED);
-		else bola.setColor(Color.ORANGE);
+	private final void colorir(Player player) {
+		if (player.getY() > dimensao.getHeight()/2 && player.getX() < dimensao.getWidth()/2)
+			player.setColor(Color.BLUE);
+		else if (player.getY() < dimensao.getHeight()/2 && player.getX() < dimensao.getWidth()/2)
+			player.setColor(Color.GREEN);
+		else if (player.getX() > dimensao.getWidth()/2 && player.getY() > dimensao.getHeight()/2)
+			player.setColor(Color.RED);
+		else player.setColor(Color.ORANGE);
 	}
 
-	private Prize hasCollision(Ball bola) {
-		for (Prize prize : prizes) {
-			if (bola.x == prize.x && bola.y == prize.y) {
-				bola.scored();
+	private Prize hasCollision(Player player) {
+		for (Prize prize : gameState.getPrizes()) {
+			if (player.x == prize.x && player.y == prize.y) {
+				player.scored();
 				return prize;
 			}
 		}
 		return null;
 	}
 	
-	public List<Prize> getPrizes() {
-		return prizes;
+	private void updateAll() {
+		observers.forEach(observer -> observer.update(gameState));
+	}
+	
+	public void subscribe(Observer observer) {
+		observers.add(observer);
+		observer.update(gameState);
+	}
+	
+	public void unsubscribe(Observer observer) {
+		observers.remove(observers.indexOf(observer));
 	}
 }

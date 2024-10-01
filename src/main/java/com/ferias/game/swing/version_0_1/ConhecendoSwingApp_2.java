@@ -2,8 +2,6 @@ package com.ferias.game.swing.version_0_1;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
@@ -22,7 +20,8 @@ public class ConhecendoSwingApp_2 {
 		Dimension dimensoes = new Dimension(300, 300);
 		
 		Game game = new Game(dimensoes);
-		GamePanel gamePanel = new GamePanel(game, dimensoes);
+		GamePanel gamePanel = new GamePanel(dimensoes);
+		game.subscribe(gamePanel);
 		
 		frontView.add(gamePanel);
 		frontView.pack();
@@ -30,15 +29,6 @@ public class ConhecendoSwingApp_2 {
 		
 		frontView.setVisible(true);
 
-		frontView.addKeyListener(new OuvinteDoTeclado(gamePanel, game));
-
-		frontView.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				System.exit(0);
-			}
-		});
-
+		frontView.addKeyListener(new OuvinteDoTeclado(game));
 	}
 }
-
-//Innerclass for convinience of this exercise

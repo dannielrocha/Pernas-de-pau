@@ -2,11 +2,11 @@ package com.ferias.game.swing.version_0_1;
 
 import java.awt.Color;
 
-public class Ball extends GameElement {
+public class Player extends GameElement {
 
 	private int score;
 
-	public Ball(int ID, int x, int y, Color color) {
+	public Player(int ID, int x, int y, Color color) {
 		super(ID, x, y, color);
 	}
 	
