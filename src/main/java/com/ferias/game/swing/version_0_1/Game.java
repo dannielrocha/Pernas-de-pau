@@ -4,10 +4,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class Game {
 	List<Observer> observers = new ArrayList<Observer>();
+	Map<Comando, BiConsumer<Player, Dimension>> strategies = loadStrategies();
 	GameState gameState = new GameState();
 	Dimension dimensao = new Dimension();
 	
@@ -15,60 +19,6 @@ public class Game {
 		this.dimensao = dimension;
 	}
 	
-	
-	private void horizontalMove(Player player, int step){
-		//executa uma regra
-		if ( (player.getX() >= 10 && step < 0) || (step > 0 && player.getX()+10 <= dimensao.getWidth()-10) )
-			player.horizontalMove(step);
-		
-		//executa uma regra
-		colorir(player);
-		
-		//executa uma regra
-		SecureRandom rand = new SecureRandom();
-		Prize prize = hasCollision(player);
-		if (prize != null) {
-			prize.x = rand.nextInt(dimensao.width/10)*10;
-			prize.y = rand.nextInt(dimensao.height/10)*10;
-		}
-		
-		updateAll();
-	}
-	
-	private void verticalMove(Player player, int step){
-		//executa uma regra
-		if ( (player.getY() >= 10 && step < 0) || (step > 0 && player.getY()+10 <= dimensao.getHeight()-10) )
-			player.verticalMove(step);
-		
-		//executa uma regra
-		colorir(player);
-		
-		//executa uma regra
-		SecureRandom rand = new SecureRandom();
-		Prize prize = hasCollision(player);
-		if (prize != null) {
-			prize.x = rand.nextInt(dimensao.width/10)*10;
-			prize.y = rand.nextInt(dimensao.height/10)*10;
-		}
-		
-		updateAll();
-	}
-	
-	public void moveUP(Player player) {
-		verticalMove(player, -10);
-	}
-	
-	public void moveDown(Player player) {
-		verticalMove(player, 10);
-	}
-	
-	public void moveLeft(Player player) {
-		horizontalMove(player, -10);
-	}
-	
-	public void moveRight(Player player) {
-		horizontalMove(player, 10);
-	}
 	
 	public Player getPlayer(int idPlayer) {
 		return gameState.getPlayers().get(idPlayer);
@@ -80,8 +30,6 @@ public class Game {
 			Player player = new Player(gameState.getPlayers().size(), 0,0, Color.BLUE);
 			gameState.getPlayers().add(player);
 		}
-		
-		updateAll();
 	}
 	
 	public void newPrize() {
@@ -92,8 +40,6 @@ public class Game {
 			Prize prize = new Prize(gameState.getPrizes().size(), xPrize, yPrize, Color.PINK);
 			gameState.getPrizes().add(prize);
 		}
-		
-		updateAll();
 	}
 	
 	private final void colorir(Player player) {
@@ -127,5 +73,68 @@ public class Game {
 	
 	public void unsubscribe(Observer observer) {
 		observers.remove(observers.indexOf(observer));
+	}
+
+
+	public void execute(Comando comando) {
+		if (comando.equals(Comando.NEW)) {
+			newPlayer();
+			newPrize();
+		} else {
+			Player player = gameState.getPlayers().get(comando.getPlayerID());
+			strategies.get(comando.getEquivalente()).accept(player, dimensao);
+			colorir(player);
+			
+			SecureRandom rand = new SecureRandom();
+			Prize prize = hasCollision(player);
+			if (prize != null) {
+				prize.x = rand.nextInt(dimensao.width/Prize.SIZE)*Prize.SIZE;
+				prize.y = rand.nextInt(dimensao.height/Prize.SIZE)*Prize.SIZE;
+			}
+		}
+		
+		updateAll();
+	}
+	
+	
+	private Map<Comando, BiConsumer<Player, Dimension>> loadStrategies() {
+		Map<Comando, BiConsumer<Player, Dimension>> map = new HashMap<Comando, BiConsumer<Player, Dimension>>();
+		map.put(Comando.MOVE_LEFT, new BiConsumer<Player, Dimension>() {
+			
+			@Override
+			public void accept(Player player, Dimension dimension) {
+				if (player.getX() >= Player.SIZE)
+						player.horizontalMove(-Player.SIZE);
+			}
+		});
+		
+		map.put(Comando.MOVE_RIGHT, new BiConsumer<Player, Dimension>() {
+			
+			@Override
+			public void accept(Player player, Dimension dimension) {
+				if (player.getX()+Player.SIZE <= dimension.getWidth()-Player.SIZE)
+						player.horizontalMove(Player.SIZE);
+			}
+		});
+		
+		map.put(Comando.MOVE_UP, new BiConsumer<Player, Dimension>() {
+			
+			@Override
+			public void accept(Player player, Dimension dimension) {
+				if (player.getY() >= Player.SIZE)
+						player.verticalMove(-Player.SIZE);
+			}
+		});
+		
+		map.put(Comando.MOVE_DOWN, new BiConsumer<Player, Dimension>() {
+			
+			@Override
+			public void accept(Player player, Dimension dimension) {
+				if (player.getY()+Player.SIZE <= dimension.getHeight()-Player.SIZE)
+						player.verticalMove(Player.SIZE);
+			}
+		});
+		
+		return map;
 	}
 }

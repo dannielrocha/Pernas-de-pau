@@ -4,6 +4,7 @@ import java.awt.Color;
 
 public abstract class GameElement {
 	
+	public final static int SIZE = 10;
 	protected int x;
 	protected int y;
 	private Color color;
