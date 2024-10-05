@@ -1,18 +1,21 @@
 package com.ferias.game.swing.version_0_1;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class GameState {
-	List<Player> players = new ArrayList<Player>();
-	List<Prize> prizes = new ArrayList<Prize>();
+public class GameState implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	Map<Integer, Player> players = new ConcurrentHashMap<Integer, Player>();
+	Map<Integer, Prize> prizes = new ConcurrentHashMap<Integer, Prize>();
 	
 	
-	public List<Player> getPlayers(){
+	public Map<Integer, Player> getPlayers(){
 		return this.players;
 	}
 	
-	public List<Prize> getPrizes() {
+	public Map<Integer, Prize> getPrizes() {
 		return prizes;
 	}
 }

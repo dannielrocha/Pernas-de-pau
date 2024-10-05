@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class Game {
-	List<Observer> observers = new ArrayList<Observer>();
+public class Game implements CommandExecutor {
+	List<LocalObserver> observers = new ArrayList<LocalObserver>();
 	Map<Comando, BiConsumer<Player, Dimension>> strategies = loadStrategies();
 	GameState gameState = new GameState();
 	Dimension dimensao = new Dimension();
@@ -27,8 +27,9 @@ public class Game {
 	
 	public void newPlayer() {
 		if (gameState.getPlayers().size()<2) {
-			Player player = new Player(gameState.getPlayers().size(), 0,0, Color.BLUE);
-			gameState.getPlayers().add(player);
+			int id = gameState.getPlayers().size();
+			Player player = new Player(id, 0,0, Color.BLUE);
+			gameState.getPlayers().put(player.getID(), player);
 		}
 	}
 	
@@ -38,7 +39,7 @@ public class Game {
 			int xPrize = rand.nextInt(dimensao.width/10)*10;
 			int yPrize = rand.nextInt(dimensao.height/10)*10;
 			Prize prize = new Prize(gameState.getPrizes().size(), xPrize, yPrize, Color.PINK);
-			gameState.getPrizes().add(prize);
+			gameState.getPrizes().put(prize.getID(), prize);
 		}
 	}
 	
@@ -53,7 +54,7 @@ public class Game {
 	}
 
 	private Prize hasCollision(Player player) {
-		for (Prize prize : gameState.getPrizes()) {
+		for (Prize prize : gameState.getPrizes().values()) {
 			if (player.x == prize.x && player.y == prize.y) {
 				player.scored();
 				return prize;
@@ -66,12 +67,12 @@ public class Game {
 		observers.forEach(observer -> observer.update(gameState));
 	}
 	
-	public void subscribe(Observer observer) {
+	public void subscribe(LocalObserver observer) {
 		observers.add(observer);
 		observer.update(gameState);
 	}
 	
-	public void unsubscribe(Observer observer) {
+	public void unsubscribe(LocalObserver observer) {
 		observers.remove(observers.indexOf(observer));
 	}
 
@@ -82,7 +83,7 @@ public class Game {
 			newPrize();
 		} else {
 			Player player = gameState.getPlayers().get(comando.getPlayerID());
-			strategies.get(comando.getEquivalente()).accept(player, dimensao);
+			strategies.get(comando.getEquivalent()).accept(player, dimensao);
 			colorir(player);
 			
 			SecureRandom rand = new SecureRandom();

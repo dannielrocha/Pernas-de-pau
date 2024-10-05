@@ -7,4 +7,9 @@ public class Prize extends GameElement {
 	public Prize(int ID, int x, int y, Color color) {
 		super(ID, x, y, color);
 	}
+
+	public void moveTo(int x, int y) {
+		this.x = x;
+		this.y = y;
+	}
 }

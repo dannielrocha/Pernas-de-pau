@@ -1,8 +1,11 @@
 package com.ferias.game.swing.version_0_1;
 
 import java.awt.Color;
+import java.io.Serializable;
+import java.util.Objects;
 
-public abstract class GameElement {
+public abstract class GameElement implements Serializable {
+	private static final long serialVersionUID = 1L;
 	
 	public final static int SIZE = 10;
 	protected int x;
@@ -36,4 +39,23 @@ public abstract class GameElement {
 	public int getID() {
 		return this.ID;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(ID);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GameElement other = (GameElement) obj;
+		return ID == other.ID;
+	}
+	
+	
 }
