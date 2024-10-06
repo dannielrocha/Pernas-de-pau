@@ -2,6 +2,8 @@ package com.ferias.game.swing.version_0_1.netclient;
 
 import java.awt.Dimension;
 import java.net.InetAddress;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -21,7 +23,7 @@ public class ClientGame implements CommandExecutor, RMIObserver {
 
 	GameState gameState = new GameState();
 	Dimension dimensao = new Dimension();
-	String localIP, serverIP;
+	String localIP, serverAddress;
 	RMICommandExecutor serverStub;
 	//SocketClient socket;
 
@@ -29,7 +31,7 @@ public class ClientGame implements CommandExecutor, RMIObserver {
 		this.dimensao = dimension;
 		try {
 			this.localIP = InetAddress.getLocalHost().getHostAddress();
-			this.serverIP = serverAddr;
+			this.serverAddress = serverAddr;
 //			Encontrando os IPs da máquina local:
 //			System.out.println("Usando InetAddress: "+InetAddress.getLocalHost()+"\n\n\n Usando NetworkInterface:");
 //			for (NetworkInterface inet: Collections.list(NetworkInterface.getNetworkInterfaces()))
@@ -44,18 +46,26 @@ public class ClientGame implements CommandExecutor, RMIObserver {
 			Retorno: uma referência (stub) para o objeto remoto.*/
 			RMIObserver clientStub = (RMIObserver) UnicastRemoteObject.exportObject(this,0);
 			//Retorna o servidor de registro RMI no enderço passado como parâmetro e porta padrão 1099:
-			Registry registry = LocateRegistry.getRegistry(serverIP);
+			Registry registry = LocateRegistry.getRegistry(serverAddress, 22259);
 			
-			//Registro do Objeto Remoto com Java RMI Registry:
-			//registry.rebind(CALLBACK_PREFIX+ localIP + ord,clientStub);
-			
+			try {
+				//Registro do Objeto Remoto com Java RMI Registry:
+				registry.bind(CALLBACK_PREFIX+ localIP,clientStub);
+			} catch (AlreadyBoundException e) {
+				registry.rebind(CALLBACK_PREFIX+ localIP,clientStub);
+			} catch (AccessException e) {
+				e.printStackTrace();
+				System.out.println("Problemas no acesso ao RMIRegistry [AccessException]");
+			} catch (RemoteException e) {
+				System.out.println("RemoteExeception: Mal funcionamento do RMIRegistry");
+			}
 			
 			for (String s: registry.list())
 				System.out.println("Stubs registrados no RMIRegistry com nome: " + s);
 			
 			//obtém o stub para o objeto remoto com nome RMICommandExecutor.GAME_SERVER_NAME do registro:
 			serverStub = (RMICommandExecutor) registry.lookup(RMICommandExecutor.GAME_SERVER_NAME);
-			serverStub.subscribe(clientStub);
+			serverStub.subscribe(CALLBACK_PREFIX+ localIP);
 
 			//O socket (upstream) precisa ser criado depois do RMI (callback way)
 			//socket = new SocketClient(endereco).conectar();

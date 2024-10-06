@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -23,10 +24,11 @@ import com.ferias.game.swing.version_0_1.Prize;
 import com.ferias.game.swing.version_0_1.netclient.RMIObserver;
 
 public class ServerGame implements RMICommandExecutor {
-	Map<String, RMIObserver> observers = new ConcurrentHashMap<String, RMIObserver>();
+	Map<String, String> observers = new ConcurrentHashMap<String, String>();
 	Map<Comando, BiConsumer<Player, Dimension>> strategies = loadStrategies();
 	GameState gameState = new GameState();
 	Dimension dimensao = new Dimension();
+	Registry registry;
 	
 	public ServerGame(Dimension dimension) {
 		
@@ -34,7 +36,7 @@ public class ServerGame implements RMICommandExecutor {
 			
 				RMICommandExecutor stub = (RMICommandExecutor) UnicastRemoteObject.exportObject(this,0);
 				//Retorna o servidor de registro RMI no localhost e porta padrão 1099:
-				Registry registry = LocateRegistry.getRegistry(InetAddress.getLocalHost().getHostAddress());
+				registry = LocateRegistry.getRegistry(InetAddress.getLocalHost().getHostAddress());
 				
 				for (String s: registry.list())
 					System.out.println("Stubs registrados no RMIRegistry com nome: " + s);
@@ -92,14 +94,14 @@ public class ServerGame implements RMICommandExecutor {
 		if (!observers.isEmpty())
 			observers.values().forEach(observer -> {
 				try {
-					observer.update(gameState);
-				} catch (RemoteException e) {
+					((RMIObserver)registry.lookup(observer)).update(gameState);
+				} catch (RemoteException | NotBoundException e) {
 					e.printStackTrace();
 				}
 			});
 	}
 	
-	public void subscribe(RMIObserver observer) {
+	public void subscribe(String observer) {
 		
 		try {
 			String clientIP = RemoteServer.getClientHost();
@@ -117,10 +119,11 @@ public class ServerGame implements RMICommandExecutor {
 		updateAll();
 	}
 	
-	public void unsubscribe(RMIObserver observer) {
+	public void unsubscribe(String observer) {
 		try {
 			observers.remove(RemoteServer.getClientHost());
-		} catch (ServerNotActiveException e) {
+			registry.unbind(observer);
+		} catch (ServerNotActiveException | RemoteException | NotBoundException e) {
 			e.printStackTrace();
 		}
 	}
