@@ -30,7 +30,7 @@ public class NetClientApp {
 					ex.printStackTrace();
 				}
 				
-				String serverIP = JOptionPane.showInputDialog("Digite o endereço IP do servidor: ");
+				String[] serverIP = JOptionPane.showInputDialog("Digite o endereço IP do servidor e a porta, separados por ':' ").split(":");
 				
 				JFrame frontView = new JFrame("Simple Swing App");
 				frontView.setResizable(false);

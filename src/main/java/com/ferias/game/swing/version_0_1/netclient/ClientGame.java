@@ -3,7 +3,6 @@ package com.ferias.game.swing.version_0_1.netclient;
 import java.awt.Dimension;
 import java.net.InetAddress;
 import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -27,11 +26,11 @@ public class ClientGame implements CommandExecutor, RMIObserver {
 	RMICommandExecutor serverStub;
 	//SocketClient socket;
 
-	public ClientGame(Dimension dimension, String serverAddr) {
+	public ClientGame(Dimension dimension, String[] serverAddr) {
 		this.dimensao = dimension;
 		try {
 			this.localIP = InetAddress.getLocalHost().getHostAddress();
-			this.serverAddress = serverAddr;
+			this.serverAddress = serverAddr[0];
 //			Encontrando os IPs da máquina local:
 //			System.out.println("Usando InetAddress: "+InetAddress.getLocalHost()+"\n\n\n Usando NetworkInterface:");
 //			for (NetworkInterface inet: Collections.list(NetworkInterface.getNetworkInterfaces()))
@@ -44,19 +43,18 @@ public class ClientGame implements CommandExecutor, RMIObserver {
 			
 			Parâmetros:obj - o objeto a ser exportado. port - a porta para expor o objeto. 
 			Retorno: uma referência (stub) para o objeto remoto.*/
-			RMIObserver clientStub = (RMIObserver) UnicastRemoteObject.exportObject(this,0);
+			RMIObserver clientStub = (RMIObserver) UnicastRemoteObject.exportObject(this,2099);
 			//Retorna o servidor de registro RMI no enderço passado como parâmetro e porta padrão 1099:
-			Registry registry = LocateRegistry.getRegistry(serverAddress, 22259);
+			Registry registry = LocateRegistry.getRegistry(serverAddress, Integer.parseInt(serverAddr.length > 1 ? serverAddr[1] : "1099"));
 			
 			try {
 				//Registro do Objeto Remoto com Java RMI Registry:
-				registry.bind(CALLBACK_PREFIX+ localIP,clientStub);
-			} catch (AlreadyBoundException e) {
 				registry.rebind(CALLBACK_PREFIX+ localIP,clientStub);
 			} catch (AccessException e) {
 				e.printStackTrace();
 				System.out.println("Problemas no acesso ao RMIRegistry [AccessException]");
 			} catch (RemoteException e) {
+				e.printStackTrace();
 				System.out.println("RemoteExeception: Mal funcionamento do RMIRegistry");
 			}
 			
